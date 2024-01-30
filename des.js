@@ -33,35 +33,6 @@ function strEnc(data, key1, key2, key3) {
 }
 
 
-function strDec(data, key1, key2, key3) {
-    if (data.length <= 0) { return ""; }
-
-    var bt1 = key1 ? getKeyBytes(key1) : null;
-    var bt2 = key2 ? getKeyBytes(key2) : null;
-    var bt3 = key3 ? getKeyBytes(key3) : null;
-
-    if (!bt1 && !bt2 && !bt3) { return ""; }
-
-    var decStr = "";
-    var iterator = parseInt(data.length / 16);
-    for (var i = 0; i < iterator; i++) {
-        var tempData = data.substring(i * 16 + 0, i * 16 + 16);
-        var strByte = hexToBt64(tempData);
-        var decByte = new Array(64);
-        for (var j = 0; j < 64; j++) {
-            decByte[j] = parseInt(strByte.substring(j, j + 1));
-        }
-        for (var bt of [bt3, bt2, bt1]) {
-            if (bt == null) { continue; }
-            for (var x = bt.length - 1; x >= 0; x--) {
-                decByte = dec(decByte, bt[x]);
-            }
-        }
-        decStr += byteToString(decByte);
-    }
-    return decStr;
-}
-
 function getKeyBytes(key) {
     var keyBytes = new Array();
     var iterator = parseInt(key.length / 4);
@@ -95,7 +66,7 @@ function hexToBt4(hex) {
 
 function byteToString(byteData) {
     var str = "";
-    for (i = 0; i < 4; i++) {
+    for (var i = 0; i < 4; i++) {
         var count = byteData.slice(i * 16, (i + 1) * 16).reduce((acc, val, idx) => acc + (val << (15 - idx)), 0);
         if (count != 0) { str += String.fromCharCode(count); }
     }
@@ -117,7 +88,7 @@ function bt4ToHex(bt) {
 
 function hexToBt64(hex) {
     var binary = "";
-    for (i = 0; i < 16; i++) {
+    for (var i = 0; i < 16; i++) {
         binary += hexToBt4(hex.substring(i, i + 1));
     }
     return binary;
@@ -145,9 +116,6 @@ function enc(dataByte, keyByte) {
     return _enc_dec(dataByte, keyByte, 0);
 }
 
-function dec(dataByte, keyByte) {
-    return _enc_dec(dataByte, keyByte, 1);
-}
 
 function initPermute(originalData) {
     var ipByte = new Array(64);
@@ -175,7 +143,7 @@ function expandPermute(rightData) {
 
 function xor(byteOne, byteTwo) {
     var xorByte = new Array(byteOne.length);
-    for (i = 0; i < byteOne.length; i++) {
+    for (var i = 0; i < byteOne.length; i++) {
         xorByte[i] = byteOne[i] ^ byteTwo[i];
     }
     return xorByte;
@@ -184,14 +152,14 @@ function xor(byteOne, byteTwo) {
 function sBoxPermute(expandByte) {
     var s = [[[14, 4, 13, 1, 2, 15, 11, 8, 3, 10, 6, 12, 5, 9, 0, 7], [0, 15, 7, 4, 14, 2, 13, 1, 10, 6, 12, 11, 9, 5, 3, 8], [4, 1, 14, 8, 13, 6, 2, 11, 15, 12, 9, 7, 3, 10, 5, 0], [15, 12, 8, 2, 4, 9, 1, 7, 5, 11, 3, 14, 10, 0, 6, 13]], [[15, 1, 8, 14, 6, 11, 3, 4, 9, 7, 2, 13, 12, 0, 5, 10], [3, 13, 4, 7, 15, 2, 8, 14, 12, 0, 1, 10, 6, 9, 11, 5], [0, 14, 7, 11, 10, 4, 13, 1, 5, 8, 12, 6, 9, 3, 2, 15], [13, 8, 10, 1, 3, 15, 4, 2, 11, 6, 7, 12, 0, 5, 14, 9]], [[10, 0, 9, 14, 6, 3, 15, 5, 1, 13, 12, 7, 11, 4, 2, 8], [13, 7, 0, 9, 3, 4, 6, 10, 2, 8, 5, 14, 12, 11, 15, 1], [13, 6, 4, 9, 8, 15, 3, 0, 11, 1, 2, 12, 5, 10, 14, 7], [1, 10, 13, 0, 6, 9, 8, 7, 4, 15, 14, 3, 11, 5, 2, 12]], [[7, 13, 14, 3, 0, 6, 9, 10, 1, 2, 8, 5, 11, 12, 4, 15], [13, 8, 11, 5, 6, 15, 0, 3, 4, 7, 2, 12, 1, 10, 14, 9], [10, 6, 9, 0, 12, 11, 7, 13, 15, 1, 3, 14, 5, 2, 8, 4], [3, 15, 0, 6, 10, 1, 13, 8, 9, 4, 5, 11, 12, 7, 2, 14]], [[2, 12, 4, 1, 7, 10, 11, 6, 8, 5, 3, 15, 13, 0, 14, 9], [14, 11, 2, 12, 4, 7, 13, 1, 5, 0, 15, 10, 3, 9, 8, 6], [4, 2, 1, 11, 10, 13, 7, 8, 15, 9, 12, 5, 6, 3, 0, 14], [11, 8, 12, 7, 1, 14, 2, 13, 6, 15, 0, 9, 10, 4, 5, 3]], [[12, 1, 10, 15, 9, 2, 6, 8, 0, 13, 3, 4, 14, 7, 5, 11], [10, 15, 4, 2, 7, 12, 9, 5, 6, 1, 13, 14, 0, 11, 3, 8], [9, 14, 15, 5, 2, 8, 12, 3, 7, 0, 4, 10, 1, 13, 11, 6], [4, 3, 2, 12, 9, 5, 15, 10, 11, 14, 1, 7, 6, 0, 8, 13]], [[4, 11, 2, 14, 15, 0, 8, 13, 3, 12, 9, 7, 5, 10, 6, 1], [13, 0, 11, 7, 4, 9, 1, 10, 14, 3, 5, 12, 2, 15, 8, 6], [1, 4, 11, 13, 12, 3, 7, 14, 10, 15, 6, 8, 0, 5, 9, 2], [6, 11, 13, 8, 1, 4, 10, 7, 9, 5, 0, 15, 14, 2, 3, 12]], [[13, 2, 8, 4, 6, 15, 11, 1, 10, 9, 3, 14, 5, 0, 12, 7], [1, 15, 13, 8, 10, 3, 7, 4, 12, 5, 6, 11, 0, 14, 9, 2], [7, 11, 4, 1, 9, 12, 14, 2, 0, 6, 10, 13, 15, 3, 5, 8], [2, 1, 14, 7, 4, 10, 8, 13, 15, 12, 9, 0, 3, 5, 6, 11]]]
     var sBoxByte = new Array(32);
-    for (m = 0; m < 8; m++) {
+    for (var m = 0; m < 8; m++) {
         var i = expandByte[m * 6 + 0] * 2 + expandByte[m * 6 + 5];
         var j = expandByte[m * 6 + 1] * 2 * 2 * 2
             + expandByte[m * 6 + 2] * 2 * 2
             + expandByte[m * 6 + 3] * 2
             + expandByte[m * 6 + 4];
         var binary = getBoxBinary[s[m][i][j]];
-        for (var i = 0; i < 4; i++) { sBoxByte[m * 4 + i] = parseInt(binary.substring(i, i + 1)); }
+        for (i = 0; i < 4; i++) { sBoxByte[m * 4 + i] = parseInt(binary.substring(i, i + 1)); }
     }
     return sBoxByte;
 }
@@ -224,8 +192,8 @@ function generateKeys(keyByte) {
     }
 
     var keys = [];
-    for (var i = 0; i < 16; i++) {
-        for (var j = 0; j < [1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1][i]; j++) {
+    for (i = 0; i < 16; i++) {
+        for (j = 0; j < [1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1][i]; j++) {
             key = [...key.slice(1, 28), key[0], ...key.slice(29, 56), key[28]];
         }
         var keyIndex = [13, 16, 10, 23, 0, 4, 2, 27, 14, 5, 20, 9, 22, 18, 11, 3, 25, 7, 15, 6, 26, 19, 12, 1, 40, 51, 30, 36, 46, 54, 29, 39, 50, 44, 32, 47, 43, 48, 38, 55, 33, 52, 45, 41, 49, 35, 28, 31];
